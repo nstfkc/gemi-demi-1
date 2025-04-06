@@ -1,0 +1,130 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Organization {
+  id          Int                      @id @default(autoincrement())
+  publicId    String                   @unique @default(cuid())
+  name        String
+  logoUrl     String?
+  description String?
+  users       User[]
+  accounts    Account[]
+  invitations OrganizationInvitation[]
+}
+
+model OrganizationInvitation {
+  id             Int          @id @default(autoincrement())
+  publicId       String       @unique @default(cuid())
+  organizationId Int
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  email          String
+  role           Int          @default(2) // 0 = Owner, 1 = Admin, 2 = User
+  acceptedAt     DateTime?
+
+  createdAt DateTime @default(now())
+}
+
+model Account {
+  id               Int           @id @default(autoincrement())
+  publicId         String        @unique @default(cuid())
+  organization     Organization? @relation(fields: [organizationId], references: [id])
+  organizationId   Int?
+  organizationRole Int           @default(2) // 0 = Owner, 1 = Admin, 2 = User
+
+  userId Int?
+  user   User? @relation(fields: [userId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model User {
+  id                Int           @id @default(autoincrement())
+  publicId          String        @unique @default(cuid())
+  name              String?
+  email             String?       @unique
+  emailVerifiedAt   DateTime?
+  verificationToken String?
+  locale            String?       @default("en-US")
+  globalRole        Int           @default(2) // 0 = Owner, 1 = Admin, 2 = User
+  password          String?
+  organization      Organization? @relation(fields: [organizationId], references: [id])
+  organizationId    Int?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  accounts           Account[]
+  session            Session[]
+  passwordResetToken PasswordResetToken[]
+  socialAccount      SocialAccount[]
+}
+
+model SocialAccount {
+  id Int @id @default(autoincrement())
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  provider   String
+  providerId String
+
+  username String?
+  email   String?
+
+  accessToken  String
+  refreshToken String
+  expiresAt    DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([username, provider])
+}
+
+model Session {
+  id        Int     @id @default(autoincrement())
+  token     String  @unique
+  userId    Int?
+  user      User?   @relation(fields: [userId], references: [id])
+  location  String? // approximated location
+  userAgent String? // user agent
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime? @updatedAt
+  expiresAt         DateTime
+  absoluteExpiresAt DateTime
+}
+
+model PasswordResetToken {
+  id     Int    @id @default(autoincrement())
+  token  String @unique
+  userId Int
+  user   User   @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model MagicLinkToken {
+  id    Int    @id @default(autoincrement())
+  token String
+  email String
+  pin   String
+
+  createdAt DateTime @default(now())
+
+  @@unique([token, email])
+  @@unique([pin, email])
+}
