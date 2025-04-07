@@ -70,6 +70,7 @@ model User {
   session            Session[]
   passwordResetToken PasswordResetToken[]
   socialAccount      SocialAccount[]
+  Order              Order[]
 }
 
 model SocialAccount {
@@ -82,7 +83,7 @@ model SocialAccount {
   providerId String
 
   username String?
-  email   String?
+  email    String?
 
   accessToken  String
   refreshToken String
@@ -127,4 +128,75 @@ model MagicLinkToken {
 
   @@unique([token, email])
   @@unique([pin, email])
+}
+
+// Application
+
+model Image {
+  id       Int    @id @default(autoincrement())
+  publicId String @unique @default(nanoid())
+
+  src String
+  alt String?
+
+  width  Int? @default(0)
+  height Int? @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ProductOnImage ProductOnImage[]
+}
+
+model ProductOnImage {
+  productId Int
+  imageId   Int
+
+  product Product @relation(fields: [productId], references: [id])
+  image   Image   @relation(fields: [imageId], references: [id])
+
+  @@unique([productId, imageId])
+}
+
+model Category {
+  id       Int    @id @default(autoincrement())
+  publicId String @unique @default(nanoid())
+
+  name String
+
+  Product   Product? @relation(fields: [productId], references: [id])
+  productId Int?
+}
+
+model Product {
+  id       Int    @id @default(autoincrement())
+  publicId String @unique @default(nanoid())
+
+  name        String
+  categories  Category[]
+  description String?
+
+  images ProductOnImage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Order     Order[]
+}
+
+model Order {
+  id       Int    @id @default(autoincrement())
+  publicId String @unique @default(nanoid())
+
+  status String @default("Pending")
+
+  createdById Int
+  createdyBy  User @relation(fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product   Product @relation(fields: [productId], references: [publicId])
+  productId String
+
+  @@unique([createdById, productId])
 }

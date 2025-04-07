@@ -1,4 +1,6 @@
-import { HttpRequest, ViewRouter } from "gemi/http";
+import { type HttpRequest, ViewRouter } from "gemi/http";
+import { HomeController } from "../controllers/HomeController";
+import { OrderController } from "../controllers/OrderController";
 
 class AuthViewRouter extends ViewRouter {
   routes = {
@@ -14,6 +16,11 @@ class AppRouter extends ViewRouter {
   routes = {
     "/": this.layout("AppLayout", {
       "/dashboard": this.view("Dashboard"),
+      "/orders": this.view("OrdersList", () => {
+        
+      }),
+      "/products": this.view("Dashboard"),
+      "/categories": this.view("Dashboard"),
     }),
   };
 }
@@ -28,9 +35,7 @@ export default class extends ViewRouter {
         return { title: "About" };
       }),
       "/pricing": this.view("Pricing", (req: HttpRequest) => {
-        req.cookies.get("cookieName");
-        req.headers.get("headerName");
-        req.ctx().setCookie("foo", "bar", { httpOnly: true });
+        const referralCode = req.search.get("referral-code");
         return { title: "Pricing" };
       }),
     }),
